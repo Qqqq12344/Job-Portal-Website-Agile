@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Interview Scheduling Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f4f6f9;
+            text-align: center;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        .form-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 400px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            text-align: left;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 8px;
+            margin-top: 8px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+
+        .table-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 40px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 80%;
+            background: white;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Interview Scheduling Management</h2>
+
+<div class="form-container">
+<form id="interviewForm">
+
+    <label>Select Shortlisted Candidate:</label>
+    <select id="candidate" required>
+        <option value="">-- Select Candidate --</option>
+        <option>Alice Tan</option>
+        <option>John Lee</option>
+        <option>Siti Ahmad</option>
+    </select>
+
+    <label>Interview Date:</label>
+    <input type="date" id="date" required>
+
+    <label>Interview Time:</label>
+    <input type="time" id="time" required>
+
+    <label>Interview Type:</label>
+    <select id="type" required>
+        <option value="">-- Select Type --</option>
+        <option>Online</option>
+        <option>Onsite</option>
+    </select>
+
+    <label>Location / Meeting Link:</label>
+    <input type="text" id="details" placeholder="Enter location or link" required>
+
+    <button type="submit">Create Interview Schedule</button>
+
+    <p id="message"></p>
+
+</form>
+</div>
+
+<h3>Scheduled Interviews</h3>
+
+<div class="table-container">
+<table id="interviewTable">
+    <thead>
+        <tr>
+            <th>Candidate</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Type</th>
+            <th>Details</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+</div>
+
+<script>
+    const form = document.getElementById("interviewForm");
+    const message = document.getElementById("message");
+    const tableBody = document.querySelector("#interviewTable tbody");
+    const dateInput = document.getElementById("date");
+
+    // Set max selectable date = 1 year from today
+    const today = new Date();
+    const oneYearLater = new Date();
+    oneYearLater.setFullYear(today.getFullYear() + 1);
+
+    const maxDate = oneYearLater.toISOString().split("T")[0];
+    const minDate = today.toISOString().split("T")[0];
+
+    dateInput.setAttribute("min", minDate);
+    dateInput.setAttribute("max", maxDate);
+
+    form.addEventListener("submit", function(event) {
+        event.preventDefault();
+
+        const candidate = document.getElementById("candidate").value;
+        const date = document.getElementById("date").value;
+        const time = document.getElementById("time").value;
+        const type = document.getElementById("type").value;
+        const details = document.getElementById("details").value;
+
+        message.textContent = "";
+        message.className = "";
+
+        if (!candidate || !date || !time || !type || !details) {
+            message.textContent = "All fields are required.";
+            message.className = "error";
+            return;
+        }
+
+        const selectedDateTime = new Date(date + "T" + time);
+        const now = new Date();
+
+        if (selectedDateTime < now) {
+            message.textContent = "Interview date and time cannot be in the past.";
+            message.className = "error";
+            return;
+        }
+
+        if (selectedDateTime > oneYearLater) {
+            message.textContent = "Interview date cannot be more than 1 year from today.";
+            message.className = "error";
+            return;
+        }
+
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+            <td>${candidate}</td>
+            <td>${date}</td>
+            <td>${time}</td>
+            <td>${type}</td>
+            <td>${details}</td>
+        `;
+
+        tableBody.appendChild(row);
+
+        message.textContent = "Interview scheduled successfully!";
+        message.className = "success";
+
+        form.reset();
+    });
+</script>
+
+</body>
+</html>
