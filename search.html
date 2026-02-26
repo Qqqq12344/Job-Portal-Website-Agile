@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Job Portal - Keyword Search</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --primary:#2563eb;
+      --danger:#ef4444;
+      --ok:#16a34a;
+      --shadow:0 10px 24px rgba(17,24,39,.08);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .wrap{max-width:980px;margin:0 auto;padding:22px 16px 48px}
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px
+    }
+    .brand{display:flex;align-items:center;gap:10px}
+    .logo{
+      width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--primary),#7c3aed);
+      box-shadow:0 10px 18px rgba(37,99,235,.25)
+    }
+    .brand h1{font-size:16px;margin:0}
+    .brand p{margin:0;font-size:12px;color:var(--muted)}
+    .pill{
+      font-size:12px;color:var(--muted);
+      border:1px solid var(--border);
+      padding:8px 10px;border-radius:999px;background:#fff
+    }
+
+    .hero{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      padding:18px;
+      box-shadow: var(--shadow);
+    }
+    .hero h2{margin:0 0 6px 0;font-size:20px}
+    .hero .sub{margin:0 0 14px 0;color:var(--muted);font-size:13px;line-height:1.4}
+
+    .searchRow{
+      display:flex;
+      gap:10px;
+      align-items:stretch;
+      flex-wrap:wrap;
+    }
+    .inputGroup{
+      flex: 1;
+      min-width: 240px;
+      background:#fff;border:1px solid var(--border);border-radius:14px;
+      display:flex;align-items:center;gap:10px;padding:10px 12px;
+    }
+    .inputGroup svg{flex:0 0 auto;opacity:.7}
+    .inputGroup input{
+      border:none;outline:none;width:100%;
+      font-size:14px;
+    }
+    .inputGroup input::placeholder{color:#9ca3af}
+
+    .btn{
+      border:none;cursor:pointer;
+      background: var(--primary);
+      color:#fff;font-weight:600;
+      border-radius:14px;
+      padding:12px 14px;
+      box-shadow: 0 12px 18px rgba(37,99,235,.25);
+      transition: transform .05s ease, filter .15s ease;
+    }
+    .btn:active{transform:scale(.99)}
+    .btn.secondary{
+      background:#fff;color:var(--text);
+      border:1px solid var(--border);
+      box-shadow:none;font-weight:600;
+    }
+
+    .status{
+      margin-top:12px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:#fff;
+      font-size:13px;
+      display:none;
+    }
+    .status.error{display:block;border-color:#fecaca;background:#fff1f2;color:#991b1b}
+    .status.ok{display:block;border-color:#bbf7d0;background:#f0fdf4;color:#166534}
+
+    .perf{
+      margin-top:8px;
+      font-size:12px;
+      color:var(--muted);
+      display:none;
+    }
+
+    .resultsHead{
+      display:flex;justify-content:space-between;align-items:center;gap:10px;
+      margin-top:14px;
+      margin-bottom:10px;
+    }
+    .resultsHead .count{font-size:13px;color:var(--muted)}
+
+    .list{display:grid;gap:10px}
+    .job{
+      background:#fff;border:1px solid var(--border);
+      border-radius: var(--radius);
+      padding:14px;
+      box-shadow: var(--shadow);
+      display:flex;justify-content:space-between;gap:12px;
+    }
+    .job .left{display:flex;gap:12px;min-width:0}
+    .avatar{
+      width:44px;height:44px;border-radius:12px;background:#e0ecff;
+      display:flex;align-items:center;justify-content:center;color:var(--primary);
+      font-weight:800;flex:0 0 auto;
+    }
+    .job h4{margin:0;font-size:15px}
+    .job .meta{
+      margin-top:4px;
+      display:flex;flex-wrap:wrap;gap:8px;
+      color:var(--muted);font-size:12px;
+    }
+    .tag{
+      font-size:12px;
+      border:1px solid var(--border);
+      padding:5px 9px;border-radius:999px;
+      background:#fff;
+      color:var(--text);
+    }
+    .tags{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
+    .tags .tag{background:#f8fafc;border-color:#e2e8f0;color:#0f172a}
+
+    .job .right{
+      display:flex;flex-direction:column;gap:8px;align-items:flex-end;flex:0 0 auto;
+    }
+    .mini{
+      font-size:12px;color:var(--muted);
+      display:flex;gap:6px;align-items:center;
+    }
+    .apply{
+      border:1px solid var(--border);
+      background:#fff;border-radius:12px;
+      padding:9px 12px;cursor:pointer;font-weight:700;
+    }
+    .apply.primary{
+      border:none;background:var(--primary);color:#fff;
+    }
+
+    .empty{
+      background:#fff;border:1px dashed var(--border);
+      border-radius: var(--radius);
+      padding:18px;
+      color:var(--muted);
+      text-align:center;
+    }
+
+    mark{
+      background: #fff7cc;
+      padding: 0 2px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>JobPortal</h1>
+          <p>Keyword Search</p>
+        </div>
+      </div>
+      <div class="pill">Job Seeker • Search & Discovery</div>
+    </div>
+
+    <section class="hero">
+      <h2>Search jobs</h2>
+      <p class="sub">Search by <b>job title</b>, <b>skills</b>, or <b>company</b>. Case-insensitive + partial matching.</p>
+
+      <div class="searchRow">
+        <div class="inputGroup" role="search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="2"/>
+            <path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <input id="keyword" type="text" placeholder="e.g. java, business analyst, Silverlake, figma" />
+        </div>
+
+        <button class="btn" id="btnSearch">Search</button>
+        <button class="btn secondary" id="btnClear">Clear</button>
+      </div>
+
+      <div id="status" class="status"></div>
+      <div id="perf" class="perf"></div>
+
+      <div class="resultsHead">
+        <div class="count" id="countText">0 jobs</div>
+      </div>
+      <div id="results" class="list"></div>
+    </section>
+  </div>
+
+  <script>
+    const JOBS = [
+      { id:1, title:"Junior Business Analyst", company:"FintechX", location:"Kuala Lumpur", salary:4500, posted:"2 days ago", skills:["Requirements","UAT","SQL","Agile"] },
+      { id:2, title:"Business Analyst (Courts System)", company:"MyJustice Tech", location:"Kuala Lumpur", salary:3800, posted:"5 days ago", skills:["BRD","Stakeholder","Testing","Documentation"] },
+      { id:3, title:"Java Developer", company:"Hitachi eBworx", location:"Kuala Lumpur", salary:6500, posted:"1 day ago", skills:["Java","Spring","REST","MySQL"] },
+      { id:4, title:"UI/UX Designer", company:"Silverlake", location:"Selangor", salary:4800, posted:"7 days ago", skills:["Figma","Wireframes","Prototyping"] },
+      { id:5, title:"Data Analyst", company:"RetailIQ", location:"Penang", salary:4200, posted:"3 days ago", skills:["Python","SQL","Power BI"] },
+      { id:6, title:"Backend Developer (Node.js)", company:"CloudNine", location:"Remote", salary:8000, posted:"4 days ago", skills:["Node.js","PostgreSQL","API"] },
+      { id:7, title:"QA Engineer", company:"TestWorks", location:"Perak", salary:4000, posted:"6 days ago", skills:["Selenium","Test Plan","Bug Tracking"] },
+    ];
+
+    const keywordEl = document.getElementById("keyword");
+    const resultsEl = document.getElementById("results");
+    const statusEl  = document.getElementById("status");
+    const countEl   = document.getElementById("countText");
+    const perfEl    = document.getElementById("perf");
+
+    const ACCEPTABLE_MS = 200;
+
+    const normalize = (s) => String(s ?? "").trim().toLowerCase();
+
+    function setStatus(type, msg){
+      statusEl.className = "status " + (type === "error" ? "error" : "ok");
+      statusEl.textContent = msg;
+      statusEl.style.display = "block";
+    }
+    function clearStatus(){
+      statusEl.style.display = "none";
+      statusEl.textContent = "";
+      statusEl.className = "status";
+    }
+    function showPerf(ms, count){
+      perfEl.style.display = "block";
+      perfEl.textContent = `Response time: ${ms.toFixed(2)} ms • Results: ${count} • ${ms <= ACCEPTABLE_MS ? "Acceptable" : "Slow"}`;
+    }
+    function hidePerf(){
+      perfEl.style.display = "none";
+      perfEl.textContent = "";
+    }
+
+    function highlight(text, kw){
+      if(!kw) return escapeHtml(text);
+      const safe = escapeHtml(text);
+      const k = escapeRegExp(kw);
+      return safe.replace(new RegExp(`(${k})`, "ig"), "<mark>$1</mark>");
+    }
+    function escapeRegExp(str){ return String(str).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function searchJobs(rawKeyword){
+      const kw = normalize(rawKeyword);
+
+      if(!kw){
+        return { error: "Please enter a valid search term (job title, skill, or company).", results: [] };
+      }
+
+      const matched = JOBS.filter(job => {
+        const title = normalize(job.title);
+        const company = normalize(job.company);
+        const skills = job.skills.map(normalize);
+
+        return title.includes(kw) || company.includes(kw) || skills.some(s => s.includes(kw));
+      });
+
+      return { error: null, results: matched };
+    }
+
+    function initials(name){
+      const parts = String(name).trim().split(/\s+/);
+      return ((parts[0]?.[0] || "?") + (parts[1]?.[0] || "")).toUpperCase();
+    }
+
+    function renderResults(list, rawKeyword){
+      resultsEl.innerHTML = "";
+
+      list.forEach(job => {
+        const card = document.createElement("div");
+        card.className = "job";
+
+        const skillsHtml = job.skills
+          .map(s => `<span class="tag">${highlight(s, rawKeyword.trim())}</span>`)
+          .join("");
+
+        card.innerHTML = `
+          <div class="left">
+            <div class="avatar" title="${escapeHtml(job.company)}">${initials(job.company)}</div>
+            <div style="min-width:0">
+              <h4>${highlight(job.title, rawKeyword.trim())}</h4>
+              <div class="meta">
+                <span>${highlight(job.company, rawKeyword.trim())}</span> •
+                <span>${escapeHtml(job.location)}</span> •
+                <span class="tag">RM ${job.salary.toLocaleString()}/mo</span>
+              </div>
+              <div class="tags">${skillsHtml}</div>
+            </div>
+          </div>
+
+          <div class="right">
+            <div class="mini">🕒 ${escapeHtml(job.posted)}</div>
+            <button class="apply primary" type="button"
+              onclick="alert('Apply clicked for: ${escapeHtml(job.title)}')">Apply</button>
+            <button class="apply" type="button"
+              onclick="alert('Saved: ${escapeHtml(job.title)}')">Save</button>
+          </div>
+        `;
+        resultsEl.appendChild(card);
+      });
+    }
+
+    function handleSearch(){
+      clearStatus();
+      hidePerf();
+
+      const input = keywordEl.value;
+
+      const t0 = performance.now();
+      const { error, results } = searchJobs(input);
+      const t1 = performance.now();
+
+      if(error){
+        setStatus("error", error);
+        resultsEl.innerHTML = `<div class="empty">Type a keyword above to start searching (e.g. <b>java</b>, <b>analyst</b>, <b>Silverlake</b>).</div>`;
+        countEl.textContent = "0 jobs";
+        showPerf(t1 - t0, 0);
+        return;
+      }
+
+      if(results.length === 0){
+        setStatus("error", `No results found for "${input.trim()}". Try another keyword.`);
+        resultsEl.innerHTML = `<div class="empty">No jobs matched your keyword.</div>`;
+        countEl.textContent = "0 jobs";
+        showPerf(t1 - t0, 0);
+        return;
+      }
+
+      setStatus("ok", `Showing ${results.length} job(s) for "${input.trim()}".`);
+      countEl.textContent = `${results.length} job${results.length > 1 ? "s" : ""}`;
+      renderResults(results, input);
+      showPerf(t1 - t0, results.length);
+    }
+
+    function handleClear(){
+      keywordEl.value = "";
+      clearStatus();
+      hidePerf();
+      resultsEl.innerHTML = `<div class="empty">Type a keyword to start searching jobs.</div>`;
+      countEl.textContent = "0 jobs";
+      keywordEl.focus();
+    }
+
+    document.getElementById("btnSearch").addEventListener("click", handleSearch);
+    document.getElementById("btnClear").addEventListener("click", handleClear);
+    keywordEl.addEventListener("keydown", (e) => { if(e.key === "Enter") handleSearch(); });
+
+    handleClear();
+  </script>
+</body>
+</html>
