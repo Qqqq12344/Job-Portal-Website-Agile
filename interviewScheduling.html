@@ -10,10 +10,6 @@
             text-align: center;
         }
 
-        h2 {
-            color: #333;
-        }
-
         .form-container {
             display: flex;
             justify-content: center;
@@ -89,9 +85,6 @@
     <label>Select Shortlisted Candidate:</label>
     <select id="candidate" required>
         <option value="">-- Select Candidate --</option>
-        <option>Alice Tan</option>
-        <option>John Lee</option>
-        <option>Siti Ahmad</option>
     </select>
 
     <label>Interview Date:</label>
@@ -124,14 +117,13 @@
     <thead>
         <tr>
             <th>Candidate</th>
-            <th>Date</th>
+            <th>Date (DD/MM/YYYY)</th>
             <th>Time</th>
             <th>Type</th>
             <th>Details</th>
         </tr>
     </thead>
-    <tbody>
-    </tbody>
+    <tbody></tbody>
 </table>
 </div>
 
@@ -139,27 +131,40 @@
     const form = document.getElementById("interviewForm");
     const message = document.getElementById("message");
     const tableBody = document.querySelector("#interviewTable tbody");
+    const candidateSelect = document.getElementById("candidate");
     const dateInput = document.getElementById("date");
 
-    // Set max selectable date = 1 year from today
+
+    const shortlistedCandidates = [
+        "Alice Tan",
+        "John Lee",
+        "Siti Ahmad"
+    ];
+
+    shortlistedCandidates.forEach(name => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        candidateSelect.appendChild(option);
+    });
+
+
     const today = new Date();
     const oneYearLater = new Date();
     oneYearLater.setFullYear(today.getFullYear() + 1);
 
-    const maxDate = oneYearLater.toISOString().split("T")[0];
-    const minDate = today.toISOString().split("T")[0];
+    dateInput.min = today.toISOString().split("T")[0];
+    dateInput.max = oneYearLater.toISOString().split("T")[0];
 
-    dateInput.setAttribute("min", minDate);
-    dateInput.setAttribute("max", maxDate);
 
     form.addEventListener("submit", function(event) {
         event.preventDefault();
 
-        const candidate = document.getElementById("candidate").value;
-        const date = document.getElementById("date").value;
+        const candidate = candidateSelect.value;
+        const date = dateInput.value;
         const time = document.getElementById("time").value;
         const type = document.getElementById("type").value;
-        const details = document.getElementById("details").value;
+        const details = document.getElementById("details").value.trim();
 
         message.textContent = "";
         message.className = "";
@@ -171,25 +176,53 @@
         }
 
         const selectedDateTime = new Date(date + "T" + time);
-        const now = new Date();
-
-        if (selectedDateTime < now) {
-            message.textContent = "Interview date and time cannot be in the past.";
-            message.className = "error";
-            return;
-        }
 
         if (selectedDateTime > oneYearLater) {
-            message.textContent = "Interview date cannot be more than 1 year from today.";
+            message.textContent = "Interview date cannot exceed 1 year from today.";
             message.className = "error";
             return;
         }
+
+
+        const [hour, minute] = time.split(":").map(Number);
+
+        if (hour < 10 || hour >= 18) {
+            message.textContent = "Interview time must be between 10:00 AM and 6:00 PM.";
+            message.className = "error";
+            return;
+        }
+
+
+        const urlPattern = /^(https?:\/\/)[^\s]+$/;
+        const locationPattern = /^[a-zA-Z0-9\s,.-]{5,}$/;
+
+        if (type === "Online") {
+            if (!urlPattern.test(details)) {
+                message.textContent = "Online interview must contain a valid URL link.";
+                message.className = "error";
+                return;
+            }
+        }
+
+        if (type === "Onsite") {
+            if (!locationPattern.test(details) || urlPattern.test(details)) {
+                message.textContent = "Onsite interview must contain a valid physical location.";
+                message.className = "error";
+                return;
+            }
+        }
+
+        const dateObj = new Date(date);
+        const formattedDate = 
+            ("0" + dateObj.getDate()).slice(-2) + "/" +
+            ("0" + (dateObj.getMonth() + 1)).slice(-2) + "/" +
+            dateObj.getFullYear();
 
         const row = document.createElement("tr");
 
         row.innerHTML = `
             <td>${candidate}</td>
-            <td>${date}</td>
+            <td>${formattedDate}</td>
             <td>${time}</td>
             <td>${type}</td>
             <td>${details}</td>
