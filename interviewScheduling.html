@@ -4,37 +4,44 @@
     <title>Interview Scheduling Management</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background-color: #f4f6f9;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #eef2f7, #dbe6f6);
+            margin: 0;
+            padding: 40px;
+        }
+
+        h2 {
             text-align: center;
+            margin-bottom: 30px;
         }
 
-        .form-container {
-            display: flex;
-            justify-content: center;
-        }
-
-        form {
+        .container {
+            max-width: 900px;
+            margin: auto;
             background: white;
-            padding: 20px;
-            border-radius: 8px;
-            width: 400px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            text-align: left;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+
+        label {
+            font-weight: 600;
         }
 
         input, select, button {
             width: 100%;
-            padding: 8px;
+            padding: 10px;
             margin-top: 8px;
-            margin-bottom: 15px;
+            margin-bottom: 18px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
         }
 
         button {
             background-color: #007bff;
             color: white;
             border: none;
+            font-weight: 600;
             cursor: pointer;
         }
 
@@ -42,36 +49,42 @@
             background-color: #0056b3;
         }
 
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+        }
+
+        th {
+            background: #007bff;
+            color: white;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .delete-btn:hover {
+            background: #b02a37;
+        }
+
         .success {
             color: green;
-            font-weight: bold;
+            font-weight: 600;
         }
 
         .error {
             color: red;
-            font-weight: bold;
-        }
-
-        .table-container {
-            display: flex;
-            justify-content: center;
-            margin-top: 40px;
-        }
-
-        table {
-            border-collapse: collapse;
-            width: 80%;
-            background: white;
-        }
-
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-        }
-
-        th {
-            background-color: #007bff;
-            color: white;
+            font-weight: 600;
         }
     </style>
 </head>
@@ -79,163 +92,212 @@
 
 <h2>Interview Scheduling Management</h2>
 
-<div class="form-container">
+<div class="container">
+
 <form id="interviewForm">
 
-    <label>Select Shortlisted Candidate:</label>
-    <select id="candidate" required>
-        <option value="">-- Select Candidate --</option>
-    </select>
+<label>Job Position:</label>
+<select id="job" required></select>
 
-    <label>Interview Date:</label>
-    <input type="date" id="date" required>
+<label>Candidate:</label>
+<select id="candidate" required></select>
 
-    <label>Interview Time:</label>
-    <input type="time" id="time" required>
+<label>Date:</label>
+<input type="date" id="date" required>
 
-    <label>Interview Type:</label>
-    <select id="type" required>
-        <option value="">-- Select Type --</option>
-        <option>Online</option>
-        <option>Onsite</option>
-    </select>
+<label>Time:</label>
+<input type="time" id="time" required>
 
-    <label>Location / Meeting Link:</label>
-    <input type="text" id="details" placeholder="Enter location or link" required>
+<label>Type:</label>
+<select id="type" required>
+<option value="">-- Select Type --</option>
+<option>Online</option>
+<option>Onsite</option>
+</select>
 
-    <button type="submit">Create Interview Schedule</button>
+<label>Location / Meeting Link:</label>
+<input type="text" id="details" required>
 
-    <p id="message"></p>
+<button type="submit">Create Interview</button>
+<p id="message"></p>
 
 </form>
-</div>
 
-<h3>Scheduled Interviews</h3>
-
-<div class="table-container">
 <table id="interviewTable">
-    <thead>
-        <tr>
-            <th>Candidate</th>
-            <th>Date (DD/MM/YYYY)</th>
-            <th>Time</th>
-            <th>Type</th>
-            <th>Details</th>
-        </tr>
-    </thead>
-    <tbody></tbody>
+<thead>
+<tr>
+<th>Job</th>
+<th>Candidate</th>
+<th>Date</th>
+<th>Time</th>
+<th>Type</th>
+<th>Details</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody></tbody>
 </table>
+
 </div>
 
 <script>
-    const form = document.getElementById("interviewForm");
-    const message = document.getElementById("message");
-    const tableBody = document.querySelector("#interviewTable tbody");
-    const candidateSelect = document.getElementById("candidate");
-    const dateInput = document.getElementById("date");
 
+let jobs = JSON.parse(localStorage.getItem("jobs")) || [
+    { id: 1, title: "Software Engineer" },
+    { id: 2, title: "UI/UX Designer" },
+    { id: 3, title: "Data Analyst" },
+    { id: 4, title: "Java Developer" }
+];
+localStorage.setItem("jobs", JSON.stringify(jobs));
 
-    const shortlistedCandidates = [
-        "Alice Tan",
-        "John Lee",
-        "Siti Ahmad"
-    ];
+const jobSelect = document.getElementById("job");
 
-    shortlistedCandidates.forEach(name => {
-        const option = document.createElement("option");
-        option.value = name;
-        option.textContent = name;
-        candidateSelect.appendChild(option);
+const defaultJobOption = document.createElement("option");
+defaultJobOption.value = "";
+defaultJobOption.textContent = "-- Select Job Position --";
+defaultJobOption.disabled = true;
+defaultJobOption.selected = true;
+jobSelect.appendChild(defaultJobOption);
+
+jobs.forEach(job => {
+    const option = document.createElement("option");
+    option.value = job.title;
+    option.textContent = job.title;
+    jobSelect.appendChild(option);
+});
+
+const shortlisted = ["Alice Tan", "John Lee", "Ali Ahmad"];
+const candidateSelect = document.getElementById("candidate");
+
+const defaultCandidate = document.createElement("option");
+defaultCandidate.value = "";
+defaultCandidate.textContent = "-- Select Candidate --";
+defaultCandidate.disabled = true;
+defaultCandidate.selected = true;
+candidateSelect.appendChild(defaultCandidate);
+
+shortlisted.forEach(name => {
+    const option = document.createElement("option");
+    option.value = name;
+    option.textContent = name;
+    candidateSelect.appendChild(option);
+});
+
+let interviews = JSON.parse(localStorage.getItem("interviews")) || [];
+const tableBody = document.querySelector("#interviewTable tbody");
+const message = document.getElementById("message");
+
+function displayInterviews() {
+    tableBody.innerHTML = "";
+
+    interviews.sort((a, b) => {
+        const dateTimeA = new Date(a.date + "T" + a.time);
+        const dateTimeB = new Date(b.date + "T" + b.time);
+
+        return dateTimeA - dateTimeB; // earliest first
     });
 
 
-    const today = new Date();
-    const oneYearLater = new Date();
-    oneYearLater.setFullYear(today.getFullYear() + 1);
-
-    dateInput.min = today.toISOString().split("T")[0];
-    dateInput.max = oneYearLater.toISOString().split("T")[0];
-
-
-    form.addEventListener("submit", function(event) {
-        event.preventDefault();
-
-        const candidate = candidateSelect.value;
-        const date = dateInput.value;
-        const time = document.getElementById("time").value;
-        const type = document.getElementById("type").value;
-        const details = document.getElementById("details").value.trim();
-
-        message.textContent = "";
-        message.className = "";
-
-        if (!candidate || !date || !time || !type || !details) {
-            message.textContent = "All fields are required.";
-            message.className = "error";
-            return;
-        }
-
-        const selectedDateTime = new Date(date + "T" + time);
-
-        if (selectedDateTime > oneYearLater) {
-            message.textContent = "Interview date cannot exceed 1 year from today.";
-            message.className = "error";
-            return;
-        }
-
-
-        const [hour, minute] = time.split(":").map(Number);
-
-        if (hour < 10 || hour >= 18) {
-            message.textContent = "Interview time must be between 10:00 AM and 6:00 PM.";
-            message.className = "error";
-            return;
-        }
-
-
-        const urlPattern = /^(https?:\/\/)[^\s]+$/;
-        const locationPattern = /^[a-zA-Z0-9\s,.-]{5,}$/;
-
-        if (type === "Online") {
-            if (!urlPattern.test(details)) {
-                message.textContent = "Online interview must contain a valid URL link.";
-                message.className = "error";
-                return;
-            }
-        }
-
-        if (type === "Onsite") {
-            if (!locationPattern.test(details) || urlPattern.test(details)) {
-                message.textContent = "Onsite interview must contain a valid physical location.";
-                message.className = "error";
-                return;
-            }
-        }
-
-        const dateObj = new Date(date);
-        const formattedDate = 
-            ("0" + dateObj.getDate()).slice(-2) + "/" +
-            ("0" + (dateObj.getMonth() + 1)).slice(-2) + "/" +
-            dateObj.getFullYear();
+    interviews.forEach((interview, index) => {
 
         const row = document.createElement("tr");
 
         row.innerHTML = `
-            <td>${candidate}</td>
-            <td>${formattedDate}</td>
-            <td>${time}</td>
-            <td>${type}</td>
-            <td>${details}</td>
+            <td>${interview.job}</td>
+            <td>${interview.candidate}</td>
+            <td>${interview.date}</td>
+            <td>${interview.time}</td>
+            <td>${interview.type}</td>
+            <td>${interview.details}</td>
+            <td>
+                <button class="delete-btn" onclick="deleteInterview(${index})">
+                    Delete
+                </button>
+            </td>
         `;
 
         tableBody.appendChild(row);
-
-        message.textContent = "Interview scheduled successfully!";
-        message.className = "success";
-
-        form.reset();
     });
-</script>
+}
 
+function deleteInterview(index) {
+    interviews.splice(index, 1);
+    localStorage.setItem("interviews", JSON.stringify(interviews));
+    displayInterviews();
+}
+
+displayInterviews();
+
+document.getElementById("interviewForm").addEventListener("submit", function(e) {
+
+    e.preventDefault();
+
+    const job = jobSelect.value;
+    const candidate = candidateSelect.value;
+    const date = document.getElementById("date").value;
+    const time = document.getElementById("time").value;
+    const type = document.getElementById("type").value;
+    const details = document.getElementById("details").value.trim();
+
+    if (!job || !candidate || !date || !time || !type || !details) {
+        message.textContent = "All fields required.";
+        message.className = "error";
+        return;
+    }
+
+    const selectedDate = new Date(date);
+    const now = new Date();
+    const oneYearLater = new Date();
+    oneYearLater.setFullYear(now.getFullYear() + 1);
+
+    if (selectedDate > oneYearLater) {
+        message.textContent = "Date cannot exceed 1 year.";
+        message.className = "error";
+        return;
+    }
+
+    const hour = parseInt(time.split(":")[0]);
+    if (hour < 9 || hour >= 18) {
+        message.textContent = "Time must be between 9AM–6PM.";
+        message.className = "error";
+        return;
+    }
+
+    const urlPattern = /^(https?:\/\/)[^\s]+$/;
+
+    if (type === "Online" && !urlPattern.test(details)) {
+        message.textContent = "Online interview requires valid URL.";
+        message.className = "error";
+        return;
+    }
+
+    if (type === "Onsite" && urlPattern.test(details)) {
+        message.textContent = "Onsite must be physical location.";
+        message.className = "error";
+        return;
+    }
+
+    interviews.push({
+        job,
+        candidate,
+        date,
+        time,
+        type,
+        details,
+        status: "Pending"
+    });
+
+    localStorage.setItem("interviews", JSON.stringify(interviews));
+    displayInterviews();
+
+    message.textContent = "Interview scheduled!";
+    message.className = "success";
+
+    document.getElementById("interviewForm").reset();
+    jobSelect.selectedIndex = 0;
+    candidateSelect.selectedIndex = 0;
+});
+
+</script>
 </body>
 </html>
