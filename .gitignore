@@ -1,0 +1,14 @@
+# Java compiled files
+*.class
+
+# IDE files
+.vscode/
+nbproject/private/
+
+# Build folders
+bin/
+build/
+dist/
+
+# Logs
+*.log 
