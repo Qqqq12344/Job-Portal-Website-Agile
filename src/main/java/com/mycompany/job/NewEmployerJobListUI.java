@@ -159,6 +159,12 @@ public class NewEmployerJobListUI {
     }
 
     private void displayJobs(List<NewJob> jobs) {
+        
+        if (jobs == null || jobs.isEmpty()) {
+            System.out.println("\nNo jobs found.");
+            return;
+        }
+
         System.out.println("\nTotal Jobs: " + jobs.size());
 
         System.out.println("+----+----------------------+--------------+------------+------------+------------+");
