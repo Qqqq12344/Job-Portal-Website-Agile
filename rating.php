@@ -1,4 +1,8 @@
 <?php
+//Job Portal Sprint 3 - GOOI YE FAN
+//Rating page for candidates. Allows users to select a candidate, view their details, and submit a rating. Validates input and prevents duplicate ratings. Displays success or error messages based on the outcome of the rating submission.
+//Final Version
+
 $conn = new mysqli("localhost", "root", "", "jp3");
 
 if ($conn->connect_error) {
