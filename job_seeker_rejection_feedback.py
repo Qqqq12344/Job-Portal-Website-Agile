@@ -15,7 +15,7 @@ USERS = {
     2: "Job Seeker 2 (no applications)",
 }
 
-# status: same vocabulary as the example table
+
 APPLICATIONS: list[dict] = [
     {
         "id": 1,
@@ -58,7 +58,7 @@ APPLICATIONS: list[dict] = [
         ),
         "rejection_feedback_at": datetime(2026, 1, 20, 10, 15),
     },
-    # Demo: always treated as already read (no "New" / no green bar)
+    
     {
         "id": 5,
         "user_id": 1,
@@ -212,7 +212,7 @@ def _unread_notifications(user_id: int) -> int:
     )
 
 
-# ---------- Templates (inline, same style as example) ----------
+# ---------- Templates ----------
 
 PAGE_TEMPLATE = """
 <!DOCTYPE html>
