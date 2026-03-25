@@ -94,29 +94,16 @@ select {
     font-size: 12px;
 }
 
-.status-pending {
-    background-color: #fff3cd;
-    color: #856404;
-}
+.status-pending { background-color: #fff3cd; color: #856404; }
+.status-confirmed { background-color: #d4edda; color: #155724; }
+.status-declined { background-color: #f8d7da; color: #721c24; }
+.status-expired { background-color: #e2e3e5; color: #6c757d; }
 
-.status-confirmed {
-    background-color: #d4edda;
+.message {
+    text-align: center;
+    font-weight: 600;
+    margin-top: 15px;
     color: #155724;
-}
-
-.status-declined {
-    background-color: #f8d7da;
-    color: #721c24;
-}
-
-.status-expired {
-    background-color: #e2e3e5;
-    color: #6c757d;
-}
-
-textarea {
-    width: 100%;
-    margin-top: 8px;
 }
 
 .no-data {
@@ -140,17 +127,17 @@ textarea {
     <button class="primary-btn" onclick="loadInvitations()">View My Invitations</button>
 </div>
 
+<div id="notification" class="message"></div>
 <div id="invitationContainer"></div>
 
 </div>
 
 <script>
 
-// Load interview data from Sprint 1
 let interviewData = JSON.parse(localStorage.getItem("interviews")) || [];
 const userSelect = document.getElementById("userSelect");
 
-// Generate dynamic user list
+// Generate users
 const uniqueUsers = [...new Set(interviewData.map(i => i.candidate))];
 
 uniqueUsers.forEach(user => {
@@ -167,12 +154,30 @@ function getStatusClass(status) {
     return "status-pending";
 }
 
+function checkExpiredInvitations() {
+    const now = new Date();
+    interviewData.forEach(invite => {
+        if (invite.status === "Pending") {
+            const interviewDateTime = new Date(invite.date + "T" + invite.time);
+            if (now > interviewDateTime) {
+                invite.status = "Expired";
+            }
+        }
+    });
+
+    localStorage.setItem("interviews", JSON.stringify(interviewData));
+}
+
 function loadInvitations() {
 
     interviewData = JSON.parse(localStorage.getItem("interviews")) || [];
+    checkExpiredInvitations();
     const selectedUser = userSelect.value;
     const container = document.getElementById("invitationContainer");
+    const notification = document.getElementById("notification");
+
     container.innerHTML = "";
+    notification.textContent = "";
 
     if (!selectedUser) {
         container.innerHTML = "<div class='no-data'>Please select your account.</div>";
@@ -193,15 +198,6 @@ function loadInvitations() {
         const card = document.createElement("div");
         card.className = "invitation-card";
 
-        const interviewDateTime = new Date(invite.date + "T" + invite.time);
-        const now = new Date();
-
-        // Auto-expire past interviews
-        if (interviewDateTime < now && invite.status === "Pending") {
-            invite.status = "Expired";
-            localStorage.setItem("interviews", JSON.stringify(interviewData));
-        }
-
         card.innerHTML = `
             <div><span class="label">Job:</span> ${invite.job}</div>
             <div><span class="label">Date:</span> ${invite.date}</div>
@@ -216,7 +212,6 @@ function loadInvitations() {
             </div>
         `;
 
-        // Sprint 3 enhancement
         if (invite.status === "Pending") {
 
             const confirmBtn = document.createElement("button");
@@ -227,7 +222,7 @@ function loadInvitations() {
             const declineBtn = document.createElement("button");
             declineBtn.textContent = "Decline";
             declineBtn.className = "action-btn decline-btn";
-            declineBtn.onclick = () => declineWithReason(invite);
+            declineBtn.onclick = () => updateStatus(invite, "Declined");
 
             card.appendChild(confirmBtn);
             card.appendChild(declineBtn);
@@ -237,12 +232,6 @@ function loadInvitations() {
             const timeInfo = document.createElement("div");
             timeInfo.innerHTML = `<div><span class="label">Responded At:</span> ${invite.responseTimestamp}</div>`;
             card.appendChild(timeInfo);
-        }
-
-        if (invite.responseReason) {
-            const reasonInfo = document.createElement("div");
-            reasonInfo.innerHTML = `<div><span class="label">Decline Reason:</span> ${invite.responseReason}</div>`;
-            card.appendChild(reasonInfo);
         }
 
         container.appendChild(card);
@@ -266,31 +255,11 @@ function updateStatus(inviteObj, newStatus) {
     });
 
     localStorage.setItem("interviews", JSON.stringify(interviewData));
-    loadInvitations();
-}
 
-function declineWithReason(inviteObj) {
+    // Improvement 8: employer notification simulation
+    document.getElementById("notification").textContent =
+        "Your response has been recorded. The employer has been notified.";
 
-    const reason = prompt("Please enter reason for declining:");
-    if (!reason || reason.trim() === "") {
-        alert("Decline reason is required.");
-        return;
-    }
-
-    interviewData.forEach(interview => {
-        if (
-            interview.job === inviteObj.job &&
-            interview.candidate === inviteObj.candidate &&
-            interview.date === inviteObj.date &&
-            interview.time === inviteObj.time
-        ) {
-            interview.status = "Declined";
-            interview.responseTimestamp = new Date().toLocaleString();
-            interview.responseReason = reason.trim();
-        }
-    });
-
-    localStorage.setItem("interviews", JSON.stringify(interviewData));
     loadInvitations();
 }
 
