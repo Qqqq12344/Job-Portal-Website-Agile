@@ -1,24 +1,27 @@
 name: PHP Unit Testing
 
-on:
-  push:
-  pull_request:
+on: [push]
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v3
 
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
       with:
         php-version: 8.1
 
-    - name: Install dependencies
-      run: composer install
+    - name: Install Composer
+      run: |
+        php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+        php composer-setup.php
+        php -r "unlink('composer-setup.php');"
 
-    - name: Run PHPUnit
+    - name: Install dependencies
+      run: php composer.phar install
+
+    - name: Run tests
       run: vendor/bin/phpunit tests
