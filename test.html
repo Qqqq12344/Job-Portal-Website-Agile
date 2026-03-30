@@ -44,8 +44,20 @@
         <button class="btn" id="btnSearch" type="button">Search</button>
         <button class="btn secondary" id="btnClear" type="button">Clear</button>
       </div>
+
+      <div class="searchRow" aria-label="Salary range filter">
+        <div class="inputGroup small">
+          <span>Min Salary (RM)</span>
+          <input id="minSalary" type="number" min="0" step="100" placeholder="optional" />
+        </div>
+        <div class="inputGroup small">
+          <span>Max Salary (RM)</span>
+          <input id="maxSalary" type="number" min="0" step="100" placeholder="optional" />
+        </div>
+      </div>
+
       <p id="search-hint" class="sub" style="margin-top:0;font-size:14px;">
-        Press Search or Enter. Automated tests on this page only exercise the keyword <code>searchJobs</code> function.
+        On load, the console runs <b>salary-only tests</b> (always empty keyword): range, min&gt;max, invalid numbers, no matches, jobs without salary excluded, count, min=max. The page still supports keyword search in the UI; those paths are not covered by the automated suite.
       </p>
 
       <div id="status" class="status" role="status" aria-live="polite"></div>
