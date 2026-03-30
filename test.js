@@ -153,9 +153,20 @@ function escapeHtml(str) {
 }
 
 /**
- * Keyword search: case-insensitive partial match on title, company, or skills.
- * Returns { error, results }; empty keyword yields error (no results).
+ * True if normalized keyword appears in job title, company, or any skill (partial match).
  */
+function keywordMatchesJob(job, kwNormalized) {
+  if (!kwNormalized) return false;
+  const title = normalize(job.title);
+  const company = normalize(job.company);
+  const skills = job.skills.map(normalize);
+  return (
+    title.includes(kwNormalized) ||
+    company.includes(kwNormalized) ||
+    skills.some(s => s.includes(kwNormalized))
+  );
+}
+
 function searchJobs(rawKeyword) {
   const kw = normalize(rawKeyword);
 
@@ -163,18 +174,7 @@ function searchJobs(rawKeyword) {
     return { error: MSG_EMPTY_KEYWORD, results: [] };
   }
 
-  const matched = JOBS.filter(job => {
-    const title = normalize(job.title);
-    const company = normalize(job.company);
-    const skills = job.skills.map(normalize);
-
-    return (
-      title.includes(kw) ||
-      company.includes(kw) ||
-      skills.some(s => s.includes(kw))
-    );
-  });
-
+  const matched = JOBS.filter(job => keywordMatchesJob(job, kw));
   return { error: null, results: matched };
 }
 
@@ -194,7 +194,6 @@ function goToJobDetails(jobId) {
   window.location.href = `job-details.html?id=${jobId}`;
 }
 
-// ✅ UPDATED renderResults with View Details
 function renderResults(list, rawKeyword) {
   resultsEl.innerHTML = "";
 
@@ -224,13 +223,11 @@ function renderResults(list, rawKeyword) {
       </div>
     `;
 
-    // ✅ button click
     card.querySelector(".btn-view").addEventListener("click", (e) => {
       e.stopPropagation();
       goToJobDetails(job.id);
     });
 
-    // ✅ whole card clickable
     card.addEventListener("click", () => {
       goToJobDetails(job.id);
     });
@@ -293,97 +290,151 @@ keywordEl.addEventListener("keydown", (e) => {
 handleClear();
 
 
+function sameSortedIds(a, b) {
+  const x = [...a].sort((p, q) => p - q);
+  const y = [...b].sort((p, q) => p - q);
+  return x.length === y.length && x.every((id, i) => id === y[i]);
+}
 
-// Automated checks: keyword search only (`searchJobs`). No salary filtering tested here.
+function assertSearchJobsReturnShape(out, label) {
+  if (out === null || typeof out !== "object") {
+    console.log(`${label} → FAIL (not an object)`);
+    return false;
+  }
+  if (!("error" in out) || !("results" in out)) {
+    console.log(`${label} → FAIL (missing error or results)`);
+    return false;
+  }
+  if (!Array.isArray(out.results)) {
+    console.log(`${label} → FAIL (results is not an array)`);
+    return false;
+  }
+  return true;
+}
+
+function allResultsMatchKeyword(results, rawKeyword) {
+  const kw = normalize(rawKeyword);
+  if (!kw) return results.length === 0;
+  return results.every(job => keywordMatchesJob(job, kw));
+}
+
+function expectedIdsForKeyword(rawKeyword) {
+  const kw = normalize(rawKeyword);
+  if (!kw) return null;
+  return JOBS.filter(job => keywordMatchesJob(job, kw))
+    .map(j => j.id)
+    .sort((a, b) => a - b);
+}
 
 function runTests() {
-  const tests = [
+  console.log("%csearchJobs logic tests", "font-weight:bold;font-size:14px");
+  console.log("Checking: return shape, empty input, ID sets vs spec, each hit matches rule, full-catalog consistency.\n");
+
+  const cases = [
     {
-      name: "Valid keyword — full job title returns relevant listing(s)",
+      name: "Full title match",
       keyword: "Junior Business Analyst",
       expectedIds: [1]
     },
     {
-      name: "Keyword — job title (partial match)",
+      name: "Partial title match",
       keyword: "Java",
       expectedIds: [3]
     },
     {
-      name: "Keyword — skill (SQL / MySQL / PostgreSQL partial match)",
+      name: "Skill / partial skill strings (SQL, MySQL, PostgreSQL)",
       keyword: "SQL",
       expectedIds: [1, 3, 5, 6]
     },
     {
-      name: "Keyword — company name (case-insensitive)",
+      name: "Company match (case-insensitive)",
       keyword: "fintechx",
       expectedIds: [1]
     },
     {
-      name: "Keyword — partial company name",
+      name: "Partial company name",
       keyword: "silver",
       expectedIds: [4]
     },
     {
-      name: "Keyword — partial skill (REST)",
+      name: "Partial skill (REST)",
       keyword: "rest",
       expectedIds: [3]
     },
     {
-      name: "Case-insensitive — uppercase keyword matches lowercase title text",
+      name: "Case-insensitive title",
       keyword: "JAVA",
       expectedIds: [3]
     },
     {
-      name: "Partial match — shared substring in multiple titles",
+      name: "Partial title shared by multiple jobs",
       keyword: "business",
       expectedIds: [1, 2]
     },
     {
-      name: "Empty keyword prompts valid search term",
+      name: "Empty keyword → error, no results",
       keyword: "",
       expectedError: MSG_EMPTY_KEYWORD
     },
     {
-      name: "Whitespace-only keyword treated as empty",
+      name: "Whitespace-only keyword → error, no results",
       keyword: "   \t  ",
       expectedError: MSG_EMPTY_KEYWORD
     },
     {
-      name: "No matching keyword returns empty results (no error from searchJobs)",
+      name: "No matches → no error, empty array",
       keyword: "Astronaut",
       expectedIds: []
     }
   ];
 
   let passed = 0;
+  const total = cases.length + 2;
 
-  tests.forEach(test => {
+  cases.forEach(c => {
     const t0 = performance.now();
-    const { error, results } = searchJobs(test.keyword);
+    const out = searchJobs(c.keyword);
     const t1 = performance.now();
-    const duration = (t1 - t0).toFixed(2);
 
-    let success = false;
-    if (test.expectedError) {
-      success = error === test.expectedError;
+    if (!assertSearchJobsReturnShape(out, c.name)) {
+      return;
+    }
+
+    const { error, results } = out;
+    let ok = true;
+
+    if (c.expectedError != null) {
+      ok =
+        error === c.expectedError &&
+        results.length === 0 &&
+        allResultsMatchKeyword(results, c.keyword);
     } else {
-      const resultIds = results.map(j => j.id).sort();
-      success = JSON.stringify(resultIds) === JSON.stringify(test.expectedIds.sort());
+      const ids = results.map(j => j.id);
+      ok =
+        error === null &&
+        sameSortedIds(ids, c.expectedIds) &&
+        allResultsMatchKeyword(results, c.keyword);
+
+      if (ok) {
+        const catalogIds = expectedIdsForKeyword(c.keyword);
+        ok = sameSortedIds(ids, catalogIds);
+      }
     }
 
-    console.log(`${test.name} → ${success ? "PASS" : "FAIL"} (${duration} ms)`);
-    if (!success) {
-      console.log("  Expected:", test.expectedError ?? test.expectedIds, "Got:", error ?? results.map(j => j.id));
+    console.log(`${c.name} → ${ok ? "PASS" : "FAIL"} (${(t1 - t0).toFixed(2)} ms)`);
+    if (!ok) {
+      console.log("  keyword:", JSON.stringify(c.keyword));
+      console.log("  error:", error, "ids:", results.map(j => j.id));
+      console.log("  expected:", c.expectedError ?? c.expectedIds);
     }
-
-    if (success) passed++;
+    if (ok) passed++;
   });
 
-  console.log(`\nKeyword search tests: ${passed}/${tests.length} passed.`);
 }
 
-// Expose for manual console checks; auto-run on this test page only
+window.keywordMatchesJob = keywordMatchesJob;
 window.searchJobs = searchJobs;
+window.runSearchTests = runTests;
 window.MSG_EMPTY_KEYWORD = MSG_EMPTY_KEYWORD;
 window.MSG_NO_KEYWORD_MATCHES = MSG_NO_KEYWORD_MATCHES;
 
