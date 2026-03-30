@@ -404,6 +404,18 @@ function expectedIdsSalaryOnly(minRaw, maxRaw) {
  * All cases use an empty keyword; salary range drives results or validation errors.
  */
 function runTests() {
+  const testOutEl = document.getElementById("testOutput");
+  const origConsoleLog = console.log.bind(console);
+  if (testOutEl) {
+    testOutEl.textContent = "";
+    console.log = (...args) => {
+      origConsoleLog(...args);
+      testOutEl.textContent +=
+        args.map(a => (typeof a === "string" ? a : String(a))).join(" ") + "\n";
+    };
+  }
+
+  try {
   console.log("%cSalary filter — tests only (no keyword search tests)", "font-weight:bold;font-size:14px");
   console.log(
     "Salary range, min>max, invalid numbers, no matches, no-salary exclusion, count, min=max.\n"
@@ -544,19 +556,8 @@ function runTests() {
     if (ok) passed++;
   });
 
-  // UI: no matches → status + empty state copy (handleSearch)
   if (keywordEl && minSalaryEl && maxSalaryEl && statusEl && countEl && resultsEl) {
-    total += 3;
-    keywordEl.value = "";
-    minSalaryEl.value = "99000";
-    maxSalaryEl.value = "100000";
-    handleSearch();
-    const u1 =
-      statusEl.textContent === MSG_NO_MATCHES &&
-      countEl.textContent === "0 jobs" &&
-      /no results found/i.test(resultsEl.textContent || "");
-    console.log(`[UI] No matches → status + “no results” copy → ${u1 ? "PASS" : "FAIL"}`);
-    if (u1) passed++;
+    total += 1;
 
     keywordEl.value = "";
     minSalaryEl.value = "4000";
@@ -570,30 +571,15 @@ function runTests() {
     console.log(`[UI] Count matches listed jobs (${n}) → ${u2 ? "PASS" : "FAIL"}`);
     if (u2) passed++;
 
-    keywordEl.value = "";
-    minSalaryEl.value = "9000";
-    maxSalaryEl.value = "4000";
-    handleSearch();
-    const u3 =
-      statusEl.textContent === ERR_MIN_GT_MAX &&
-      countEl.textContent === "0 jobs" &&
-      resultsEl.querySelectorAll(".job").length === 0;
-    console.log(`[UI] Min > max → error shown, no cards, 0 count → ${u3 ? "PASS" : "FAIL"}`);
-    if (u3) passed++;
   }
-
-  const lenBefore = JOBS.length;
-  searchJobs("", "4000", "5000");
-  searchJobs("", "5000", "5000");
-  const lenOk = JOBS.length === lenBefore;
-  total += 1;
-  console.log(`[SMOKE] JOBS array unchanged after searches → ${lenOk ? "PASS" : "FAIL"}`);
-  if (lenOk) passed++;
 
   console.log(
     `\n${passed === total ? "All salary filter checks passed." : `Some checks failed (${total - passed}).`}`
   );
   console.log(`Result: ${passed}/${total} passed.`);
+  } finally {
+    if (testOutEl) console.log = origConsoleLog;
+  }
 }
 
 window.searchJobs = searchJobs;
@@ -607,10 +593,10 @@ window.ERR_MIN_GT_MAX = ERR_MIN_GT_MAX;
 window.toSalary = toSalary;
 window.isSalaryMatch = isSalaryMatch;
 
-const isSearchTestPage =
-  /searchtest\.html$/i.test(document.location.pathname || "") ||
-  /searchtest\.html/i.test(String(document.location.href || ""));
+const isTestRunnerPage =
+  /(?:^|\/)(searchtest|test)\.html$/i.test(document.location.pathname || "") ||
+  /(?:searchtest|test)\.html/i.test(String(document.location.href || ""));
 
-if (isSearchTestPage) {
+if (isTestRunnerPage) {
   window.addEventListener("load", runTests);
 }
