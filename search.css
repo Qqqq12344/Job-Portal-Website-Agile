@@ -115,6 +115,17 @@ body{
   font-size:15px;
 }
 
+.inputGroup.small{
+  flex:0 1 260px;
+  min-width:220px;
+}
+
+.inputGroup.small span{
+  color:var(--muted);
+  font-size:13px;
+  white-space:nowrap;
+}
+
 .btn,
 .apply{
   border:none;

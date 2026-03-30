@@ -89,6 +89,17 @@ const JOBS = [
     description: "Create test plans, run manual and automated tests, log defects, and ensure software quality before release.",
     deadline: "2026-03-10",
     isAvailable: false
+  },
+  {
+    id: 8,
+    title: "Product Intern",
+    company: "LaunchPad Labs",
+    location: "Kuala Lumpur",
+    posted: "2 days ago",
+    skills: ["Research", "Documentation", "Communication"],
+    description: "Support product discovery, competitor analysis, and documentation for internal product improvements.",
+    deadline: "2026-03-30",
+    isAvailable: true
   }
 ];
 
@@ -97,6 +108,8 @@ const resultsEl = document.getElementById("results");
 const statusEl = document.getElementById("status");
 const countEl = document.getElementById("countText");
 const perfEl = document.getElementById("perf");
+const minSalaryEl = document.getElementById("minSalary");
+const maxSalaryEl = document.getElementById("maxSalary");
 
 const ACCEPTABLE_MS = 200;
 
@@ -144,19 +157,50 @@ function escapeHtml(str) {
     .replaceAll("'", "&#039;");
 }
 
-function searchJobs(rawKeyword) {
-  const kw = normalize(rawKeyword);
+function toSalary(value) {
+  if (value === "" || value === null || value === undefined) return null;
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 0 ? n : NaN;
+}
 
-  if (!kw) {
-    return { error: "Please enter a valid search term (job title, skill, or company).", results: [] };
+function hasSalaryInfo(job) {
+  return Number.isFinite(job.salaryMin) && Number.isFinite(job.salaryMax);
+}
+
+function isSalaryMatch(job, minSalary, maxSalary) {
+  if (minSalary === null && maxSalary === null) return true;
+  if (!hasSalaryInfo(job)) return false;
+
+  const rangeMin = minSalary === null ? Number.NEGATIVE_INFINITY : minSalary;
+  const rangeMax = maxSalary === null ? Number.POSITIVE_INFINITY : maxSalary;
+  return job.salaryMin >= rangeMin && job.salaryMax <= rangeMax;
+}
+
+function searchJobs(rawKeyword, rawMinSalary, rawMaxSalary) {
+  const kw = normalize(rawKeyword);
+  const minSalary = toSalary(rawMinSalary);
+  const maxSalary = toSalary(rawMaxSalary);
+
+  if (Number.isNaN(minSalary) || Number.isNaN(maxSalary)) {
+    return { error: "Please enter a valid salary range using numbers only.", results: [] };
+  }
+
+  if (minSalary !== null && maxSalary !== null && minSalary > maxSalary) {
+    return { error: "Minimum salary cannot be higher than maximum salary. Please enter a valid salary range.", results: [] };
+  }
+
+  if (!kw && minSalary === null && maxSalary === null) {
+    return { error: "Please enter a keyword or a salary range to search.", results: [] };
   }
 
   const matched = JOBS.filter(job => {
     const title = normalize(job.title);
     const company = normalize(job.company);
     const skills = job.skills.map(normalize);
+    const keywordMatch = !kw || title.includes(kw) || company.includes(kw) || skills.some(s => s.includes(kw));
+    const salaryMatch = isSalaryMatch(job, minSalary, maxSalary);
 
-    return title.includes(kw) || company.includes(kw) || skills.some(s => s.includes(kw));
+    return keywordMatch && salaryMatch;
   });
 
   return { error: null, results: matched };
@@ -226,9 +270,11 @@ function handleSearch() {
   hidePerf();
 
   const input = keywordEl.value;
+  const minSalaryInput = minSalaryEl.value;
+  const maxSalaryInput = maxSalaryEl.value;
 
   const t0 = performance.now();
-  const { error, results } = searchJobs(input);
+  const { error, results } = searchJobs(input, minSalaryInput, maxSalaryInput);
   const t1 = performance.now();
 
   if (error) {
@@ -240,14 +286,14 @@ function handleSearch() {
   }
 
   if (results.length === 0) {
-    setStatus("error", `No results found for "${input.trim()}". Try another keyword.`);
-    resultsEl.innerHTML = `<div class="empty">No jobs matched your keyword.</div>`;
+    setStatus("error", "No job listings found for the selected keyword/salary range.");
+    resultsEl.innerHTML = `<div class="empty">No results found. Try adjusting your keyword or salary range.</div>`;
     countEl.textContent = "0 jobs";
     showPerf(t1 - t0, 0);
     return;
   }
 
-  setStatus("ok", `Showing ${results.length} job(s) for "${input.trim()}".`);
+  setStatus("ok", `Showing ${results.length} job(s) that match your filters.`);
   countEl.textContent = `${results.length} job${results.length > 1 ? "s" : ""}`;
   renderResults(results, input);
   showPerf(t1 - t0, results.length);
@@ -255,6 +301,8 @@ function handleSearch() {
 
 function handleClear() {
   keywordEl.value = "";
+  minSalaryEl.value = "";
+  maxSalaryEl.value = "";
   clearStatus();
   hidePerf();
   resultsEl.innerHTML = `<div class="empty">Type a keyword to start searching jobs.</div>`;
@@ -267,6 +315,8 @@ document.getElementById("btnClear").addEventListener("click", handleClear);
 keywordEl.addEventListener("keydown", (e) => {
   if (e.key === "Enter") handleSearch();
 });
+minSalaryEl.addEventListener("input", handleSearch);
+maxSalaryEl.addEventListener("input", handleSearch);
 
 window.JOBS = JOBS;
 
