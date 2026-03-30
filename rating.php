@@ -4,6 +4,7 @@
 //Final Version
 
 $conn = new mysqli("localhost", "root", "", "jp3");
+require_once 'rating_logic.php';
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
@@ -18,34 +19,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $rating = $_POST['rating'] ?? "";
     $selected_candidate_id = $candidate_id;
 
-    if (empty($candidate_id)) {
-        $message = "<div class='error'>Please select a candidate.</div>";
-    } 
-    else if (empty($rating)) {
-        $message = "<div class='error'>Please select a rating.</div>";
-    }
-    else {
-        $check_sql = "SELECT rating FROM candidates WHERE id='$candidate_id' LIMIT 1";
-        $check_result = $conn->query($check_sql);
+    $result = processRating($conn, $candidate_id, $rating);
 
-        if ($check_result && $check_result->num_rows > 0) {
-            $current_rating = (int) $check_result->fetch_assoc()['rating'];
-            $new_rating = (int) $rating;
-
-            if ($current_rating === $new_rating) {
-                $message = "<div class='error'>Latest rating is the same as previous rating. Please choose a different rating.</div>";
-            } else {
-                $sql = "UPDATE candidates SET rating='$rating' WHERE id='$candidate_id'";
-
-                if ($conn->query($sql)) {
-                    $message = "<div class='success'>Rating updated successfully!</div>";
-                } else {
-                    $message = "<div class='error'>Error updating rating.</div>";
-                }
-            }
-        } else {
-            $message = "<div class='error'>Candidate not found.</div>";
-        }
+    if ($result["status"] === "success") {
+        $message = "<div class='success'>{$result['message']}</div>";
+    } else {
+        $message = "<div class='error'>{$result['message']}</div>";
     }
 }
 
