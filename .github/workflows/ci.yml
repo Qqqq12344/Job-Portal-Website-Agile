@@ -20,14 +20,5 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
 
-      - name: Compile main code
-        run: |
-          javac *.java
-          
-      - name: Compile test code
-        run: |
-          javac -cp "src/main/java" src/test/java/com/mycompany/job/JobControllerTest.java
-          
-      - name: Run Unit Tests
-        run: |
-          java -cp "src/test/java:src/main/java" com.mycompany.job.JobControllerTest
+      - name: Run tests with Maven
+        run: mvn test
