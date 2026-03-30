@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Job Portal - Keyword Search</title>
+  <title>Job Portal - Keyword Search (Test)</title>
   <link rel="stylesheet" href="search.css" />
 </head>
 <body>
@@ -22,34 +22,33 @@
     <section class="hero">
       <h2>Search jobs</h2>
       <p class="sub">
-        Search by <b>job title</b>, <b>skills</b>, or <b>company</b>. Case-insensitive + partial matching.
+        Find roles that match your skills and interests. Search by <b>job title</b>, <b>skills</b>, or <b>company</b>.
+        Matching is <b>case-insensitive</b> and supports <b>partial</b> keywords.
       </p>
 
       <div class="searchRow">
-        <div class="inputGroup" role="search">
+        <div class="inputGroup" role="search" aria-label="Keyword search">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="2"/>
             <path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
-          <input id="keyword" type="text" placeholder="e.g. java, business analyst, Silverlake, figma" />
+          <input
+            id="keyword"
+            type="search"
+            autocomplete="off"
+            placeholder="e.g. java, analyst, SQL, Silverlake, figma"
+            aria-describedby="search-hint"
+          />
         </div>
 
-        <button class="btn" id="btnSearch">Search</button>
-        <button class="btn secondary" id="btnClear">Clear</button>
+        <button class="btn" id="btnSearch" type="button">Search</button>
+        <button class="btn secondary" id="btnClear" type="button">Clear</button>
       </div>
+      <p id="search-hint" class="sub" style="margin-top:0;font-size:14px;">
+        Press Search or Enter. Automated tests on this page only exercise the keyword <code>searchJobs</code> function.
+      </p>
 
-      <div class="searchRow" aria-label="Salary range filter">
-        <div class="inputGroup small">
-          <span>Min Salary (RM)</span>
-          <input id="minSalary" type="number" min="0" step="100" placeholder="e.g. 4000" />
-        </div>
-        <div class="inputGroup small">
-          <span>Max Salary (RM)</span>
-          <input id="maxSalary" type="number" min="0" step="100" placeholder="e.g. 6500" />
-        </div>
-      </div>
-
-      <div id="status" class="status"></div>
+      <div id="status" class="status" role="status" aria-live="polite"></div>
       <div id="perf" class="perf"></div>
 
       <div class="resultsHead">
@@ -60,6 +59,6 @@
     </section>
   </div>
 
-  <script src="search_script.js"></script>
+  <script src="test.js"></script>
 </body>
 </html>

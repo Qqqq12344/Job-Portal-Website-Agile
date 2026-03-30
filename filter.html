@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Job Portal - Salary Filter</title>
+  <link rel="stylesheet" href="search.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>JobPortal</h1>
+          <p>Salary Range Filter</p>
+        </div>
+      </div>
+      <div class="pill">Job Seeker • Salary Filter</div>
+    </div>
+
+    <section class="hero">
+      <h2>Filter jobs by salary</h2>
+      <p class="sub">Enter a salary range to narrow down suitable jobs.</p>
+
+      <div class="searchRow">
+        <div class="inputGroup small">
+          <span>Min Salary (RM)</span>
+          <input id="minSalary" type="number" min="0" step="100" placeholder="e.g. 4000" />
+        </div>
+        <div class="inputGroup small">
+          <span>Max Salary (RM)</span>
+          <input id="maxSalary" type="number" min="0" step="100" placeholder="e.g. 6500" />
+        </div>
+        <button class="btn" id="btnApply">Apply Filter</button>
+        <button class="btn secondary" id="btnClear">Clear</button>
+      </div>
+
+      <div id="status" class="status"></div>
+      <div class="resultsHead">
+        <div class="count" id="countText">0 jobs</div>
+      </div>
+      <div id="results" class="list"></div>
+    </section>
+  </div>
+
+  <script>
+    const JOBS = [
+      { id: 1, title: "Junior Business Analyst", company: "FintechX", location: "Kuala Lumpur", salaryMin: 4000, salaryMax: 4500 },
+      { id: 2, title: "Business Analyst (Courts System)", company: "MyJustice Tech", location: "Kuala Lumpur", salaryMin: 3500, salaryMax: 3800 },
+      { id: 3, title: "Java Developer", company: "Hitachi eBworx", location: "Kuala Lumpur", salaryMin: 6000, salaryMax: 6500 },
+      { id: 4, title: "UI/UX Designer", company: "Silverlake", location: "Selangor", salaryMin: 4500, salaryMax: 4800 },
+      { id: 5, title: "Product Intern", company: "LaunchPad Labs", location: "Kuala Lumpur" }
+    ];
+
+    const minSalaryEl = document.getElementById("minSalary");
+    const maxSalaryEl = document.getElementById("maxSalary");
+    const statusEl = document.getElementById("status");
+    const countEl = document.getElementById("countText");
+    const resultsEl = document.getElementById("results");
+
+    function setStatus(type, msg) {
+      statusEl.className = "status " + (type === "error" ? "error" : "ok");
+      statusEl.textContent = msg;
+      statusEl.style.display = "block";
+    }
+
+    function clearStatus() {
+      statusEl.style.display = "none";
+      statusEl.textContent = "";
+      statusEl.className = "status";
+    }
+
+    function toSalary(value) {
+      if (value === "") return null;
+      const n = Number(value);
+      return Number.isFinite(n) && n >= 0 ? n : NaN;
+    }
+
+    function hasSalaryInfo(job) {
+      return Number.isFinite(job.salaryMin) && Number.isFinite(job.salaryMax);
+    }
+
+    function formatSalary(job) {
+      return `RM ${job.salaryMin.toLocaleString()} - RM ${job.salaryMax.toLocaleString()}/mo`;
+    }
+
+    function render(list) {
+      resultsEl.innerHTML = "";
+      list.forEach(job => {
+        const card = document.createElement("div");
+        card.className = "job";
+        card.innerHTML = `
+          <div class="left">
+            <div style="min-width:0">
+              <h4>${job.title}</h4>
+              <div class="meta">
+                <span>${job.company}</span> •
+                <span>${job.location}</span> •
+                <span class="tag">${formatSalary(job)}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        resultsEl.appendChild(card);
+      });
+    }
+
+    function applyFilter() {
+      clearStatus();
+      const min = toSalary(minSalaryEl.value);
+      const max = toSalary(maxSalaryEl.value);
+
+      if (Number.isNaN(min) || Number.isNaN(max)) {
+        setStatus("error", "Please enter a valid salary range using numbers only.");
+        countEl.textContent = "0 jobs";
+        resultsEl.innerHTML = '<div class="empty">No results found.</div>';
+        return;
+      }
+
+      if (min !== null && max !== null && min > max) {
+        setStatus("error", "Minimum salary cannot be higher than maximum salary. Please enter a valid salary range.");
+        countEl.textContent = "0 jobs";
+        resultsEl.innerHTML = '<div class="empty">No results found.</div>';
+        return;
+      }
+
+      const minRange = min === null ? Number.NEGATIVE_INFINITY : min;
+      const maxRange = max === null ? Number.POSITIVE_INFINITY : max;
+
+      const list = JOBS.filter(job => hasSalaryInfo(job) && job.salaryMin >= minRange && job.salaryMax <= maxRange);
+
+      if (list.length === 0) {
+        setStatus("error", "No job listings found for the selected salary range.");
+        countEl.textContent = "0 jobs";
+        resultsEl.innerHTML = '<div class="empty">No results found.</div>';
+        return;
+      }
+
+      setStatus("ok", `Showing ${list.length} job(s) matching your salary range.`);
+      countEl.textContent = `${list.length} jobs`;
+      render(list);
+    }
+
+    function clearFilter() {
+      minSalaryEl.value = "";
+      maxSalaryEl.value = "";
+      clearStatus();
+      countEl.textContent = "0 jobs";
+      resultsEl.innerHTML = '<div class="empty">Enter a salary range to filter job listings.</div>';
+    }
+
+    document.getElementById("btnApply").addEventListener("click", applyFilter);
+    document.getElementById("btnClear").addEventListener("click", clearFilter);
+    minSalaryEl.addEventListener("input", applyFilter);
+    maxSalaryEl.addEventListener("input", applyFilter);
+
+    clearFilter();
+  </script>
+</body>
+</html>
