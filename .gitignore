@@ -9,6 +9,13 @@ nbproject/private/
 bin/
 build/
 dist/
+target/
 
 # Logs
 *.log 
+
+# Maven Wrapper
+.mvn/wrapper/maven-wrapper.jar
+
+# Local copied jars (should not be committed)
+lib/
