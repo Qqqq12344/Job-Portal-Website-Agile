@@ -1,87 +1,89 @@
-// ===== Validation Functions =====
-
-// Validate working hours (9:00 AM – 6:00 PM)
-function isWithinWorkingHours(time) {
-    const hour = parseInt(time.split(":")[0]);
-    return hour >= 9 && hour < 18;
-}
-
-// Validate interview date (must be today or within 1 year from now)
-function isValidFutureDate(date) {
-    const selectedDate = new Date(date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const oneYearLater = new Date();
-    oneYearLater.setFullYear(today.getFullYear() + 1);
-
-    return selectedDate >= today && selectedDate <= oneYearLater;
-}
-
-// Validate interview details based on type
-function isValidInterviewDetails(type, details) {
-    const urlPattern = /^(https?:\/\/)[^\s]+$/;
-
-    if (type === "Online") {
-        return urlPattern.test(details);
-    } else if (type === "Onsite") {
-        return !urlPattern.test(details) && details.trim() !== "";
-    }
-    return false;
-}
-
-// ===== Automated Unit Testing =====
 function runTests() {
+
+    console.log("=== Automated Unit Testing ===");
+
     const tests = [
+
         {
             name: "Working Hours Valid",
-            test: () => isWithinWorkingHours("9:00")
+            test: () => isWithinWorkingHours("10:00") === true
         },
+
         {
             name: "Working Hours Invalid",
-            test: () => !isWithinWorkingHours("08:30")
+            test: () => isWithinWorkingHours("20:00") === false
         },
+
         {
             name: "Future Date Valid",
             test: () => {
                 const future = new Date();
-                future.setDate(future.getDate() + 5);
-                return isValidFutureDate(future.toISOString().split("T")[0]);
+                future.setDate(future.getDate() + 10);
+                return isValidDate(future.toISOString().split("T")[0]) === true;
             }
         },
+
         {
             name: "Past Date Invalid",
-            test: () => !isValidFutureDate("2026-03-29")
+            test: () => {
+                const past = new Date();
+                past.setDate(past.getDate() - 5);
+                return isValidDate(past.toISOString().split("T")[0]) === false;
+            }
         },
+
         {
             name: "Date Beyond One Year Invalid",
             test: () => {
-                const future = new Date();
-                future.setFullYear(future.getFullYear() + 2);
-                return !isValidFutureDate(future.toISOString().split("T")[0]);
+                const beyond = new Date();
+                beyond.setFullYear(beyond.getFullYear() + 2);
+                return isValidDate(beyond.toISOString().split("T")[0]) === false;
             }
         },
+
         {
             name: "Valid Online Link",
-            test: () => isValidInterviewDetails("Online", "https://meet.google.com/abc")
+            test: () => isValidOnlineLink("https://meet-abc-123") === true
         },
+
         {
             name: "Invalid Online Link",
-            test: () => !isValidInterviewDetails("Online", "meet-abc-123")
+            test: () => isValidOnlineLink("https:meet-123-456") === false
         },
+
         {
             name: "Valid Onsite Location",
-            test: () => isValidInterviewDetails("Onsite", "Petaling Jaya")
+            test: () => isValidOnsiteLocation("Cheras") === true
         },
+
         {
-            name: "Invalid Onsite With URL",
-            test: () => !isValidInterviewDetails("Onsite", "https://meet-cde-456")
+            name: "Invalid Onsite Location",
+            test: () => isValidOnsiteLocation("https://meet-123-456") === false
+        },
+
+        {
+            name: "Interview Record Added",
+            test: () => {
+                const before = interviews.length;
+                createInterview("Software Engineer", "Alice Tan", "2026-06-02", "10:00", "Onsite", "Cheras");
+                const after = interviews.length;
+                return after === before + 1;
+            }
+        },
+
+        {
+            name: "Record Exists in Array",
+            test: () => {
+                return interviews.some(i =>
+                    i.job === "Software Engineer" &&
+                    i.candidate === "Alice Tan"
+                );
+            }
         }
+
     ];
 
     let passed = 0;
-
-    console.log("===== Automated Unit Testing =====");
 
     tests.forEach(test => {
         const result = test.test();
@@ -98,5 +100,5 @@ function runTests() {
     console.log(`%c${passed}/${tests.length} tests passed.`, "color: green; font-weight: bold;");
 }
 
-// Run tests automatically when the page loads
+
 window.addEventListener("load", runTests);
