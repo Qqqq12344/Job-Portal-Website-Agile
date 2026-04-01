@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Job Seeker Dashboard</title>
+
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #eef2f7, #dbe6f6);
+    margin: 0;
+    padding: 40px;
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.container {
+    max-width: 900px;
+    margin: auto;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+.selector-section {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+select, button {
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+select {
+    width: 250px;
+}
+
+.primary-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.primary-btn:hover {
+    background-color: #0056b3;
+}
+
+.invitation-card {
+    background: #f8f9ff;
+    border-left: 5px solid #007bff;
+    padding: 18px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.label {
+    font-weight: 600;
+}
+
+.action-btn {
+    margin-top: 10px;
+    margin-right: 10px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.confirm-btn {
+    background-color: #28a745;
+    color: white;
+}
+
+.decline-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.status {
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+.status-pending { background-color: #fff3cd; color: #856404; }
+.status-confirmed { background-color: #d4edda; color: #155724; }
+.status-declined { background-color: #f8d7da; color: #721c24; }
+.status-expired { background-color: #e2e3e5; color: #6c757d; }
+
+.message {
+    text-align: center;
+    font-weight: 600;
+    margin-top: 15px;
+    color: #155724;
+}
+
+.no-data {
+    text-align: center;
+    font-weight: 600;
+    color: #888;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Job Seeker Dashboard</h2>
+
+<div class="container">
+
+<div class="selector-section">
+    <select id="userSelect">
+        <option value="">-- Select Your Account --</option>
+    </select>
+    <button class="primary-btn" onclick="loadInvitations()">View My Invitations</button>
+</div>
+
+<div id="notification" class="message"></div>
+<div id="invitationContainer"></div>
+
+</div>
+
+<script>
+
+let interviewData = JSON.parse(localStorage.getItem("interviews")) || [];
+const userSelect = document.getElementById("userSelect");
+
+// Generate users
+const uniqueUsers = [...new Set(interviewData.map(i => i.candidate))];
+
+uniqueUsers.forEach(user => {
+    const option = document.createElement("option");
+    option.value = user;
+    option.textContent = user;
+    userSelect.appendChild(option);
+});
+
+function getStatusClass(status) {
+    if (status === "Confirmed") return "status-confirmed";
+    if (status === "Declined") return "status-declined";
+    if (status === "Expired") return "status-expired";
+    return "status-pending";
+}
+
+function checkExpiredInvitations() {
+    const now = new Date();
+    interviewData.forEach(invite => {
+        if (invite.status === "Pending") {
+            const interviewDateTime = new Date(invite.date + "T" + invite.time);
+            if (now > interviewDateTime) {
+                invite.status = "Expired";
+            }
+        }
+    });
+
+    localStorage.setItem("interviews", JSON.stringify(interviewData));
+}
+
+function loadInvitations() {
+
+    interviewData = JSON.parse(localStorage.getItem("interviews")) || [];
+    checkExpiredInvitations();
+    const selectedUser = userSelect.value;
+    const container = document.getElementById("invitationContainer");
+    const notification = document.getElementById("notification");
+
+    container.innerHTML = "";
+    notification.textContent = "";
+
+    if (!selectedUser) {
+        container.innerHTML = "<div class='no-data'>Please select your account.</div>";
+        return;
+    }
+
+    const myInvites = interviewData
+        .filter(i => i.candidate === selectedUser)
+        .sort((a, b) => new Date(a.date + "T" + a.time) - new Date(b.date + "T" + b.time));
+
+    if (myInvites.length === 0) {
+        container.innerHTML = "<div class='no-data'>No invitations found.</div>";
+        return;
+    }
+
+    myInvites.forEach(invite => {
+
+        const card = document.createElement("div");
+        card.className = "invitation-card";
+
+        card.innerHTML = `
+            <div><span class="label">Job:</span> ${invite.job}</div>
+            <div><span class="label">Date:</span> ${invite.date}</div>
+            <div><span class="label">Time:</span> ${invite.time}</div>
+            <div><span class="label">Type:</span> ${invite.type}</div>
+            <div><span class="label">Details:</span> ${invite.details}</div>
+            <div>
+                <span class="label">Status:</span>
+                <span class="status ${getStatusClass(invite.status)}">
+                    ${invite.status}
+                </span>
+            </div>
+        `;
+
+        if (invite.status === "Pending") {
+
+            const confirmBtn = document.createElement("button");
+            confirmBtn.textContent = "Confirm";
+            confirmBtn.className = "action-btn confirm-btn";
+            confirmBtn.onclick = () => updateStatus(invite, "Confirmed");
+
+            const declineBtn = document.createElement("button");
+            declineBtn.textContent = "Decline";
+            declineBtn.className = "action-btn decline-btn";
+            declineBtn.onclick = () => updateStatus(invite, "Declined");
+
+            card.appendChild(confirmBtn);
+            card.appendChild(declineBtn);
+        }
+
+        if (invite.responseTimestamp) {
+            const timeInfo = document.createElement("div");
+            timeInfo.innerHTML = `<div><span class="label">Responded At:</span> ${invite.responseTimestamp}</div>`;
+            card.appendChild(timeInfo);
+        }
+
+        container.appendChild(card);
+    });
+}
+
+function updateStatus(inviteObj, newStatus) {
+
+    if (!confirm("Are you sure you want to " + newStatus + " this interview?")) return;
+
+    interviewData.forEach(interview => {
+        if (
+            interview.job === inviteObj.job &&
+            interview.candidate === inviteObj.candidate &&
+            interview.date === inviteObj.date &&
+            interview.time === inviteObj.time
+        ) {
+            interview.status = newStatus;
+            interview.responseTimestamp = new Date().toLocaleString();
+        }
+    });
+
+    localStorage.setItem("interviews", JSON.stringify(interviewData));
+
+    // Improvement 8: employer notification simulation
+    document.getElementById("notification").textContent =
+        "Your response has been recorded. The employer has been notified.";
+
+    loadInvitations();
+}
+
+</script>
+
+</body>
+</html>
